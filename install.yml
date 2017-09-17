@@ -1,0 +1,46 @@
+- name: Install
+  hosts: production
+  gather_facts: no
+  vars:
+  tasks:
+    - raw: yum update -y
+      become: yes
+
+    - raw: yum upgrade -y
+      become: yes
+
+    - name: install packages
+      yum: name={{item}} state=present update_cache=yes
+      with_items:
+        - gcc
+        - make
+        - ntp
+        - wget
+        - openssl
+        - openssl-devel
+        - pcre-devel
+      become: yes
+
+    - name: Japanese Time Setting
+      command: "sh -c \"timedatectl set-timezone Asia/Tokyo\""
+      become: yes
+
+    - name: ntp setting
+      copy: src=files/ntp.conf dest=/etc/ntp.conf
+      become: yes
+
+    - name: ntp restart
+      service: name=ntpd state=restarted
+      become: yes
+
+    - name: history setting
+      copy: src=files/profile.d/history.sh dest=/etc/profile.d/history.sh
+      become: yes
+
+    - name: init hosts
+      copy: src=files/hosts dest=/etc/hosts
+      become: yes
+
+    - name: edit hosts
+      command: "sh -c 'echo 127.0.1.1 $(hostname) >> /etc/hosts'"
+      become: yes
